@@ -13,6 +13,7 @@ from prompt_toolkit.shortcuts import PromptSession
 from prompt_toolkit.styles import Style
 from rich.console import Console
 
+from . import __version__
 from .config import Config, create_env_file
 
 console = Console()
@@ -28,7 +29,7 @@ def _print_logo() -> None:
         "[cyan] ║  [/cyan][bold white]▸ rf[/bold white][cyan]  ·  [/cyan][bold white]leafar[/bold white][cyan]      ║[/cyan]\n"
         "[cyan] ║  [/cyan][dim]android  ai  agent[/dim][cyan]   ║[/cyan]\n"
         "[cyan] ╚═══════════════════════╝[/cyan]\n"
-        "[dim]  powered by Rafael Alves[/dim]\n"
+        f"[dim]  powered by Rafael Alves  v{__version__}[/dim]\n"
     )
 
 
@@ -45,7 +46,7 @@ def _print_header() -> None:
         "[cyan] ║ [/cyan][bold white]▸ rf  ·  leafar[/bold white][cyan]   ║[/cyan]\n"
         "[cyan] ║ [/cyan][dim]android  ai  agent[/dim][cyan] ║[/cyan]\n"
         "[cyan] ╚═══════════════════╝[/cyan]\n"
-        "[dim]   powered by Rafael Alves[/dim]\n"
+        f"[dim]   powered by Rafael Alves  v{__version__}[/dim]\n"
     )
 
 
