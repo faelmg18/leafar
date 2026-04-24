@@ -672,13 +672,14 @@ def init(project: str) -> None:
     install_cjs = npm_global / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "install.cjs"
     node_bin = _shutil.which("node") or "node"
 
+    npm_bin = _shutil.which("npm") or "npm"
+
     if not claude_bin:
         console.print("  [dim]Instalando Claude Code...[/dim]")
-        npm_bin = _shutil.which("npm") or "npm"
         try:
             subprocess.run(
                 [npm_bin, "install", "-g", "@anthropic-ai/claude-code",
-                 "--prefix", str(npm_global)],
+                 "--prefix", str(npm_global), "--include=optional"],
                 check=True,
             )
             claude_bin = npm_global_bin / "claude"
@@ -697,14 +698,21 @@ def init(project: str) -> None:
             console.print("  [red]✗[/red]  Falha ao instalar Claude Code.")
             sys.exit(1)
     else:
-        console.print("  [green]✓[/green] Claude Code instalado")
-
-    # Garante binário nativo — sempre roda install.cjs se existir
-    # (o postinstall pode não executar com --prefix ou em instalações antigas)
-    if install_cjs.exists():
-        subprocess.run([node_bin, str(install_cjs)], check=False,
-                       cwd=str(install_cjs.parent),
-                       capture_output=True)  # silencioso — só baixa se faltar
+        # Verifica se o binário nativo está OK — se não, reinstala com --include=optional
+        r = subprocess.run(f'"{claude_bin}" --version', shell=True,
+                           capture_output=True, text=True, timeout=10)
+        output = (r.stdout + r.stderr).lower()
+        if "native binary not installed" in output or "native package" in output:
+            console.print("  [yellow]⚠[/yellow]  Binário nativo ausente. Reinstalando...")
+            subprocess.run(
+                [npm_bin, "install", "-g", "@anthropic-ai/claude-code",
+                 "--prefix", str(npm_global), "--include=optional"],
+                check=False,
+            )
+            console.print("  [green]✓[/green] Claude Code reparado")
+        else:
+            version = r.stdout.strip().splitlines()[0] if r.stdout else "instalado"
+            console.print(f"  [green]✓[/green] Claude Code [dim]{version}[/dim]")
 
     # ── Verifica/faz login ───────────────────────────────────────────────
     session_file = Path.home() / ".claude" / "credentials.json"
