@@ -628,47 +628,87 @@ def init(project: str) -> None:
 
     # ── 1/2 Claude Code ──────────────────────────────────────────────────
     console.print("[bold]1/2  Claude Code[/bold]")
+    import shutil as _shutil
+
+    npm_global_bin = Path.home() / ".npm-global" / "bin"
     claude_candidates = [
-        Path.home() / ".npm-global" / "bin" / "claude",
+        npm_global_bin / "claude",
         Path("/usr/local/bin/claude"),
         Path("/opt/homebrew/bin/claude"),
     ]
     claude_bin = next((p for p in claude_candidates if p.exists()), None)
 
-    if claude_bin:
+    # ── Verifica/instala Node.js ─────────────────────────────────────────
+    if not _shutil.which("node") and not _shutil.which("npm"):
+        console.print("  [yellow]⚠[/yellow]  Node.js não encontrado.")
+        console.print("  [dim]Instalando via Homebrew...[/dim]")
         try:
-            r = subprocess.run(
-                [str(claude_bin), "--version"],
-                capture_output=True, text=True, timeout=5,
+            if _shutil.which("brew"):
+                subprocess.run(["brew", "install", "node"], check=True)
+                console.print("  [green]✓[/green] Node.js instalado")
+            else:
+                console.print(
+                    "  [red]✗[/red]  Homebrew não encontrado.\n"
+                    "  Instale o Node.js manualmente: [bold]https://nodejs.org[/bold]\n"
+                    "  Depois rode [bold]rf init[/bold] novamente."
+                )
+                sys.exit(1)
+        except subprocess.CalledProcessError:
+            console.print("  [red]✗[/red]  Falha ao instalar Node.js. Instale manualmente: https://nodejs.org")
+            sys.exit(1)
+    else:
+        node_ver = subprocess.run(["node", "--version"], capture_output=True, text=True).stdout.strip()
+        console.print(f"  [green]✓[/green] Node.js [dim]{node_ver}[/dim]")
+
+    # ── Verifica/instala Claude Code ─────────────────────────────────────
+    if not claude_bin:
+        console.print("  [dim]Instalando Claude Code...[/dim]")
+        npm_bin = _shutil.which("npm") or "npm"
+        try:
+            subprocess.run(
+                [npm_bin, "install", "-g", "@anthropic-ai/claude-code", "--prefix", str(Path.home() / ".npm-global")],
+                check=True,
             )
+            claude_bin = npm_global_bin / "claude"
+            # Adiciona ao PATH no .zshrc/.bashrc
+            for rc_file in [Path.home() / ".zshrc", Path.home() / ".bashrc"]:
+                if rc_file.exists():
+                    content = rc_file.read_text()
+                    path_line = 'export PATH="$HOME/.npm-global/bin:$PATH"'
+                    if path_line not in content:
+                        with rc_file.open("a") as f:
+                            f.write(f"\n# rf — leafar\n{path_line}\n")
+            os.environ["PATH"] = f"{npm_global_bin}:{os.environ.get('PATH', '')}"
+            console.print("  [green]✓[/green] Claude Code instalado")
+            console.print(f"  [dim]PATH atualizado em ~/.zshrc[/dim]")
+        except subprocess.CalledProcessError:
+            console.print("  [red]✗[/red]  Falha ao instalar Claude Code.")
+            sys.exit(1)
+    else:
+        try:
+            r = subprocess.run([str(claude_bin), "--version"], capture_output=True, text=True, timeout=5)
             version = r.stdout.strip().splitlines()[0] if r.stdout else "instalado"
             console.print(f"  [green]✓[/green] Claude Code [dim]{version}[/dim]")
         except Exception:
             console.print("  [green]✓[/green] Claude Code instalado")
 
-        # Verifica se há sessão ativa
-        session_file = Path.home() / ".claude" / "credentials.json"
-        alt_session  = Path.home() / ".claude.json"
-        logged_in = session_file.exists() or (
-            alt_session.exists() and '"oauthAccount"' in alt_session.read_text()
-        )
-        if logged_in:
-            console.print("  [green]✓[/green] Sessão OAuth ativa\n")
-        else:
-            console.print("  [yellow]⚠[/yellow]  Não autenticado.")
-            try:
-                do_login = click.confirm("  Fazer login agora?", default=True)
-            except (KeyboardInterrupt, EOFError):
-                do_login = False
-            if do_login:
-                subprocess.run([str(claude_bin), "/login"])
-            console.print()
+    # ── Verifica/faz login ───────────────────────────────────────────────
+    session_file = Path.home() / ".claude" / "credentials.json"
+    alt_session  = Path.home() / ".claude.json"
+    logged_in = session_file.exists() or (
+        alt_session.exists() and '"oauthAccount"' in alt_session.read_text()
+    )
+    if logged_in:
+        console.print("  [green]✓[/green] Sessão OAuth ativa\n")
     else:
-        console.print("  [red]✗[/red]  Claude Code não encontrado.")
-        console.print(
-            "  Instale com:\n"
-            "  [bold]npm install -g @anthropic-ai/claude-code --prefix ~/.npm-global[/bold]\n"
-        )
+        console.print("  [yellow]⚠[/yellow]  Não autenticado.")
+        try:
+            do_login = click.confirm("  Fazer login agora?", default=True)
+        except (KeyboardInterrupt, EOFError):
+            do_login = False
+        if do_login and claude_bin:
+            subprocess.run([str(claude_bin), "/login"])
+        console.print()
 
     # ── 2/2 Projeto Android ──────────────────────────────────────────────
     console.print("[bold]2/2  Projeto Android[/bold]")
