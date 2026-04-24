@@ -3,12 +3,20 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "leafar"
+name = "rf-leafar"
 version = "0.1.0"
-description = "Intelligent Android development CLI powered by Rafael Alves"
+description = "Android development CLI by Rafael Alves"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
+authors = [{ name = "Rafael Alves", email = "ifaelmg18@icloud.com" }]
+keywords = ["android", "adb", "cli", "development", "automation"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Topic :: Software Development",
+]
 dependencies = [
     "anthropic>=0.40.0",
     "click>=8.1.0",
@@ -18,6 +26,10 @@ dependencies = [
     "prompt_toolkit>=3.0.0",
     "mcp>=1.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/faelmg18/leafar"
+Repository = "https://github.com/faelmg18/leafar"
 
 [project.scripts]
 rf = "leafar.cli:main"
