@@ -17,7 +17,14 @@
 ## Instalação
 
 ```bash
+# Via script (recomendado — instala tudo automaticamente)
 curl -fsSL https://raw.githubusercontent.com/faelmg18/leafar/main/install.sh | sh
+
+# Via pipx (ambiente isolado)
+pipx install rf-leafar
+
+# Via pip
+pip install rf-leafar
 ```
 
 **Requisitos:** Python 3.10+, Node.js, Android SDK (`adb` no PATH)
