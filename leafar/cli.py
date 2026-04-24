@@ -618,6 +618,65 @@ def figma_status() -> None:
         )
 
 
+def _install_claude_skills() -> None:
+    """Cria skills (slash commands) em ~/.claude/commands/ para login nos MCPs."""
+    commands_dir = Path.home() / ".claude" / "commands"
+    commands_dir.mkdir(parents=True, exist_ok=True)
+
+    skills = {
+        "figma-login.md": """\
+Configura o MCP do Figma no Claude Code via OAuth.
+
+Execute o seguinte comando bash e informe o usuário sobre o resultado:
+
+```bash
+claude mcp add --transport http figma https://api.figma.com/v1/ai/mcp
+```
+
+Após executar, peça ao usuário para reiniciar o Claude Code (`rf chat`) para o Figma aparecer como MCP ativo.
+""",
+        "github-login.md": """\
+Configura o MCP do GitHub no Claude Code via OAuth.
+
+Execute o seguinte comando bash e informe o usuário sobre o resultado:
+
+```bash
+claude mcp add --transport http github https://api.githubcopilot.com/mcp/
+```
+
+Após executar, peça ao usuário para reiniciar o Claude Code (`rf chat`) para o GitHub aparecer como MCP ativo.
+""",
+        "azure-login.md": """\
+Configura o MCP do Azure DevOps no Claude Code.
+
+Pergunte ao usuário:
+1. O PAT (Personal Access Token) do Azure DevOps
+2. A organização do Azure DevOps (ex: minha-empresa)
+
+Depois execute o seguinte comando bash substituindo os valores:
+
+```bash
+claude mcp add azure-devops -- npx -y @microsoft/azure-devops-mcp
+```
+
+E configure as variáveis de ambiente necessárias informando ao usuário que deve setar:
+- AZURE_DEVOPS_PAT=<token>
+- AZURE_DEVOPS_ORG=<organização>
+
+Após executar, peça ao usuário para reiniciar o Claude Code (`rf chat`).
+""",
+    }
+
+    for filename, content in skills.items():
+        skill_path = commands_dir / filename
+        skill_path.write_text(content)
+
+    console.print(
+        "  [green]✓[/green] Skills instaladas: "
+        "[bold]/figma-login[/bold]  [bold]/github-login[/bold]  [bold]/azure-login[/bold]"
+    )
+
+
 @main.command()
 @click.option("--project", "-p", default=".", show_default=True, help="Android project path.")
 def init(project: str) -> None:
@@ -868,12 +927,16 @@ def init(project: str) -> None:
     else:
         console.print(f"  [dim]CLAUDE.md já existe — mantido[/dim]")
 
+    # ── Skills (slash commands) no Claude Code ───────────────────────────
+    _install_claude_skills()
+
     # ── Pronto ───────────────────────────────────────────────────────────
     console.print("\n[bold green]✓ Configuração concluída![/bold green]")
     console.print(f"  Projeto: [bold]{proj_path}[/bold]")
     if package_name:
         console.print(f"  Package: [bold]{package_name}[/bold]")
-    console.print("\n  Rode: [bold cyan]rf chat[/bold cyan]\n")
+    console.print("\n  Rode: [bold cyan]rf chat[/bold cyan]")
+    console.print("  Skills disponíveis: [bold]/figma-login[/bold]  [bold]/github-login[/bold]  [bold]/azure-login[/bold]\n")
 
 
 @main.command()
