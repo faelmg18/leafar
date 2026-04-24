@@ -29,6 +29,20 @@ pip install rf-leafar
 
 **Requisitos:** Python 3.10+, Node.js, Android SDK (`adb` no PATH)
 
+> **pipx** instala o `rf` em ambiente isolado — não interfere no Python do sistema e remove limpo com `pipx uninstall rf-leafar`.
+
+## Testando sem instalar permanentemente
+
+```bash
+# Instala, usa e remove
+pip install rf-leafar
+rf init
+# ... quando terminar:
+pip uninstall rf-leafar -y
+```
+
+> O `rf` requer Python 3.10+, Node.js e `adb` no PATH — certifique-se que o ambiente Android está configurado (Android Studio instalado).
+
 ## Primeiros passos
 
 ```bash
