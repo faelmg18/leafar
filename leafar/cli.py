@@ -427,13 +427,10 @@ def chat(project: str) -> None:
 
     proj = Path(project).resolve()
     env = {**os.environ, "RF_PROJECT_PATH": str(proj)}
-    # claude pode ser script Node.js — usa node explicitamente se necessário
-    node_bin = _shutil.which("node")
-    if node_bin:
-        os.execve(node_bin, [node_bin, claude_bin], env)
-    else:
-        # fallback: deixa o shell resolver o shebang
-        os.execv("/bin/sh", ["/bin/sh", "-c", f'exec "{claude_bin}"'])
+    # Usa o shell para executar o wrapper do claude — ele resolve o shebang
+    # e chama o binário nativo correto internamente (não passar via node diretamente,
+    # pois o binário pode ser .exe compilado que node não consegue carregar como módulo)
+    os.execve("/bin/sh", ["/bin/sh", "-c", f'exec "{claude_bin}"'], env)
 
 
 @main.command()
