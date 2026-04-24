@@ -426,7 +426,13 @@ def chat(project: str) -> None:
 
     proj = Path(project).resolve()
     env = {**os.environ, "RF_PROJECT_PATH": str(proj)}
-    os.execve(claude_bin, [claude_bin], env)
+    # claude pode ser script Node.js — usa node explicitamente se necessário
+    node_bin = _shutil.which("node")
+    if node_bin:
+        os.execve(node_bin, [node_bin, claude_bin], env)
+    else:
+        # fallback: deixa o shell resolver o shebang
+        os.execv("/bin/sh", ["/bin/sh", "-c", f'exec "{claude_bin}"'])
 
 
 @main.command()
@@ -686,7 +692,7 @@ def init(project: str) -> None:
             sys.exit(1)
     else:
         try:
-            r = subprocess.run([str(claude_bin), "--version"], capture_output=True, text=True, timeout=5)
+            r = subprocess.run(f'"{claude_bin}" --version', shell=True, capture_output=True, text=True, timeout=5)
             version = r.stdout.strip().splitlines()[0] if r.stdout else "instalado"
             console.print(f"  [green]✓[/green] Claude Code [dim]{version}[/dim]")
         except Exception:
@@ -707,7 +713,7 @@ def init(project: str) -> None:
         except (KeyboardInterrupt, EOFError):
             do_login = False
         if do_login and claude_bin:
-            subprocess.run([str(claude_bin), "/login"])
+            subprocess.run(f'"{claude_bin}" /login', shell=True)
         console.print()
 
     # ── 2/2 Projeto Android ──────────────────────────────────────────────
