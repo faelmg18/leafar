@@ -13,7 +13,6 @@ from prompt_toolkit.shortcuts import PromptSession
 from prompt_toolkit.styles import Style
 from rich.console import Console
 
-from .agent import LeafarAgent
 from .config import Config, create_env_file
 
 console = Console()
@@ -261,7 +260,8 @@ def _start_figma_mcp(token: str) -> "subprocess.Popen | None":
     return proc
 
 
-def _make_agent(project: str, header: bool = True) -> LeafarAgent:
+def _make_agent(project: str, header: bool = True):
+    from .agent import LeafarAgent
     if header:
         _print_header()
     config = Config(project_path=project)
