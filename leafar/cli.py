@@ -670,11 +670,20 @@ def init(project: str) -> None:
     if not claude_bin:
         console.print("  [dim]Instalando Claude Code...[/dim]")
         npm_bin = _shutil.which("npm") or "npm"
+        npm_global = Path.home() / ".npm-global"
         try:
             subprocess.run(
-                [npm_bin, "install", "-g", "@anthropic-ai/claude-code", "--prefix", str(Path.home() / ".npm-global")],
+                [npm_bin, "install", "-g", "@anthropic-ai/claude-code",
+                 "--prefix", str(npm_global)],
                 check=True,
             )
+            # Roda o postinstall manualmente (--prefix pode não executar scripts)
+            install_cjs = npm_global / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "install.cjs"
+            if install_cjs.exists():
+                console.print("  [dim]Configurando binário nativo...[/dim]")
+                node_bin = _shutil.which("node") or "node"
+                subprocess.run([node_bin, str(install_cjs)], check=False,
+                               cwd=str(install_cjs.parent))
             claude_bin = npm_global_bin / "claude"
             # Adiciona ao PATH no .zshrc/.bashrc
             for rc_file in [Path.home() / ".zshrc", Path.home() / ".bashrc"]:
@@ -692,9 +701,23 @@ def init(project: str) -> None:
             sys.exit(1)
     else:
         try:
-            r = subprocess.run(f'"{claude_bin}" --version', shell=True, capture_output=True, text=True, timeout=5)
-            version = r.stdout.strip().splitlines()[0] if r.stdout else "instalado"
-            console.print(f"  [green]✓[/green] Claude Code [dim]{version}[/dim]")
+            r = subprocess.run(f'"{claude_bin}" --version', shell=True, capture_output=True, text=True, timeout=10)
+            output = (r.stdout + r.stderr).lower()
+            if "native binary not installed" in output or "postinstall" in output:
+                # Binário nativo ausente — roda o postinstall
+                console.print("  [yellow]⚠[/yellow]  Binário nativo ausente. Corrigindo...")
+                npm_global = Path.home() / ".npm-global"
+                install_cjs = npm_global / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "install.cjs"
+                if install_cjs.exists():
+                    node_bin = _shutil.which("node") or "node"
+                    subprocess.run([node_bin, str(install_cjs)], check=False,
+                                   cwd=str(install_cjs.parent))
+                    console.print("  [green]✓[/green] Claude Code reparado")
+                else:
+                    console.print("  [red]✗[/red]  Reinstale: npm install -g @anthropic-ai/claude-code")
+            else:
+                version = r.stdout.strip().splitlines()[0] if r.stdout else "instalado"
+                console.print(f"  [green]✓[/green] Claude Code [dim]{version}[/dim]")
         except Exception:
             console.print("  [green]✓[/green] Claude Code instalado")
 
