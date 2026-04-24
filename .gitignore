@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+*.egg
+
+# Env & secrets
+.env
+.env.*
+
+# Leafar session
+.rf_session.json
+
+# Backups
+backups/
+leafar/cli_tui_backup.py
+
+# IDE
+.idea/
+.vscode/
+*.DS_Store
