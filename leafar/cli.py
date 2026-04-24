@@ -682,6 +682,15 @@ def init(project: str) -> None:
                  "--prefix", str(npm_global), "--include=optional"],
                 check=True,
             )
+            # Instala pacote nativo e linka o binário
+            _arch = subprocess.run(["uname", "-m"], capture_output=True, text=True).stdout.strip()
+            arch_slug = "arm64" if "arm64" in _arch else "x64"
+            native_pkg = f"@anthropic-ai/claude-code-{sys.platform}-{arch_slug}"
+            subprocess.run([npm_bin, "install", native_pkg, "--prefix", str(npm_global)],
+                           capture_output=True)
+            if install_cjs.exists():
+                subprocess.run([node_bin, str(install_cjs)],
+                               cwd=str(install_cjs.parent), capture_output=True)
             claude_bin = npm_global_bin / "claude"
             # Adiciona ao PATH no .zshrc/.bashrc
             for rc_file in [Path.home() / ".zshrc", Path.home() / ".bashrc"]:
@@ -706,23 +715,18 @@ def init(project: str) -> None:
             console.print("  [yellow]⚠[/yellow]  Binário nativo ausente. Instalando...")
             _sys = sys.platform  # darwin, linux
             _arch = subprocess.run(["uname", "-m"], capture_output=True, text=True).stdout.strip()
-            # arm64 → darwin-arm64, x86_64 → darwin-x64
             arch_slug = "arm64" if "arm64" in _arch else "x64"
             native_pkg = f"@anthropic-ai/claude-code-{_sys}-{arch_slug}"
-            result = subprocess.run(
+            # 1) instala o pacote nativo no mesmo prefix
+            subprocess.run(
                 [npm_bin, "install", native_pkg, "--prefix", str(npm_global)],
-                capture_output=True, text=True,
+                capture_output=True,
             )
-            if result.returncode == 0:
-                console.print("  [green]✓[/green] Claude Code reparado")
-            else:
-                # fallback: reinstala tudo com --include=optional
-                subprocess.run(
-                    [npm_bin, "install", "-g", "@anthropic-ai/claude-code",
-                     "--prefix", str(npm_global), "--include=optional"],
-                    check=False,
-                )
-                console.print("  [green]✓[/green] Claude Code reparado")
+            # 2) roda install.cjs para linkar o binário nativo
+            if install_cjs.exists():
+                subprocess.run([node_bin, str(install_cjs)],
+                               cwd=str(install_cjs.parent), capture_output=True)
+            console.print("  [green]✓[/green] Claude Code reparado")
         else:
             version = r.stdout.strip().splitlines()[0] if r.stdout else "instalado"
             console.print(f"  [green]✓[/green] Claude Code [dim]{version}[/dim]")
