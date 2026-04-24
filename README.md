@@ -23,8 +23,8 @@ curl -fsSL https://raw.githubusercontent.com/faelmg18/leafar/main/install.sh | s
 # Via pipx (ambiente isolado)
 pipx install rf-leafar
 
-# Via pip
-pip install rf-leafar
+# Via pip (macOS: use pip3)
+pip3 install rf-leafar
 ```
 
 **Requisitos:** Python 3.10+, Node.js, Android SDK (`adb` no PATH)
@@ -35,10 +35,10 @@ pip install rf-leafar
 
 ```bash
 # Instala, usa e remove
-pip install rf-leafar
+pip3 install rf-leafar
 rf init
 # ... quando terminar:
-pip uninstall rf-leafar -y
+pip3 uninstall rf-leafar -y
 ```
 
 > O `rf` requer Python 3.10+, Node.js e `adb` no PATH — certifique-se que o ambiente Android está configurado (Android Studio instalado).
