@@ -622,45 +622,70 @@ def _install_claude_skills() -> None:
 
     skills = {
         "figma-login.md": """\
-Configura o MCP do Figma no Claude Code via OAuth.
+Configura o MCP do Figma no Claude Code editando ~/.claude.json diretamente.
 
-Execute o seguinte comando bash e informe o usuário sobre o resultado:
+Execute este script Python via bash:
 
 ```bash
-claude mcp add --transport http figma https://api.figma.com/v1/ai/mcp
+python3 -c "
+import json, pathlib
+p = pathlib.Path.home() / '.claude.json'
+data = json.loads(p.read_text()) if p.exists() else {}
+data.setdefault('mcpServers', {})['figma'] = {'type': 'http', 'url': 'https://api.figma.com/v1/ai/mcp'}
+p.write_text(json.dumps(data, indent=2))
+print('✓ Figma MCP configurado em ~/.claude.json')
+"
 ```
 
-Após executar, peça ao usuário para reiniciar o Claude Code (`rf chat`) para o Figma aparecer como MCP ativo.
+Após executar com sucesso, informe o usuário que precisa reiniciar o Claude Code (`rf chat`) para o Figma aparecer. Na primeira mensagem que usar o Figma, o Claude Code vai abrir o browser para autenticar.
 """,
         "github-login.md": """\
-Configura o MCP do GitHub no Claude Code via OAuth.
+Configura o MCP do GitHub no Claude Code editando ~/.claude.json diretamente.
 
-Execute o seguinte comando bash e informe o usuário sobre o resultado:
+Execute este script Python via bash:
 
 ```bash
-claude mcp add --transport http github https://api.githubcopilot.com/mcp/
+python3 -c "
+import json, pathlib
+p = pathlib.Path.home() / '.claude.json'
+data = json.loads(p.read_text()) if p.exists() else {}
+data.setdefault('mcpServers', {})['github'] = {'type': 'http', 'url': 'https://api.githubcopilot.com/mcp/'}
+p.write_text(json.dumps(data, indent=2))
+print('✓ GitHub MCP configurado em ~/.claude.json')
+"
 ```
 
-Após executar, peça ao usuário para reiniciar o Claude Code (`rf chat`) para o GitHub aparecer como MCP ativo.
+Após executar com sucesso, informe o usuário que precisa reiniciar o Claude Code (`rf chat`). Na primeira mensagem que usar o GitHub, o Claude Code vai abrir o browser para autenticar com a conta GitHub desejada.
 """,
         "azure-login.md": """\
-Configura o MCP do Azure DevOps no Claude Code.
+Configura o MCP do Azure DevOps no Claude Code editando ~/.claude.json diretamente.
 
-Pergunte ao usuário:
-1. O PAT (Personal Access Token) do Azure DevOps
-2. A organização do Azure DevOps (ex: minha-empresa)
+Primeiro pergunte ao usuário:
+1. O PAT (Personal Access Token) do Azure DevOps pessoal
+2. A URL da organização (ex: https://dev.azure.com/minha-empresa)
 
-Depois execute o seguinte comando bash substituindo os valores:
+Depois execute este script Python via bash substituindo os valores:
 
 ```bash
-claude mcp add azure-devops -- npx -y @microsoft/azure-devops-mcp
+python3 -c "
+import json, pathlib
+p = pathlib.Path.home() / '.claude.json'
+data = json.loads(p.read_text()) if p.exists() else {}
+data.setdefault('mcpServers', {})['azure-devops'] = {
+    'type': 'stdio',
+    'command': 'npx',
+    'args': ['-y', '@microsoft/azure-devops-mcp'],
+    'env': {
+        'AZURE_DEVOPS_PAT': 'SEU_PAT_AQUI',
+        'AZURE_DEVOPS_ORG': 'https://dev.azure.com/SUA_ORG'
+    }
+}
+p.write_text(json.dumps(data, indent=2))
+print('✓ Azure DevOps MCP configurado em ~/.claude.json')
+"
 ```
 
-E configure as variáveis de ambiente necessárias informando ao usuário que deve setar:
-- AZURE_DEVOPS_PAT=<token>
-- AZURE_DEVOPS_ORG=<organização>
-
-Após executar, peça ao usuário para reiniciar o Claude Code (`rf chat`).
+Após executar, informe o usuário que precisa reiniciar o Claude Code (`rf chat`).
 """,
     }
 
