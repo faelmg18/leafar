@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rf-leafar"
-version = "0.1.0"
+version = "0.1.1"
 description = "Android development CLI by Rafael Alves"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,6 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "anthropic>=0.40.0",
+    "claude-agent-sdk>=0.1.61",
     "click>=8.1.0",
     "python-dotenv>=1.0.0",
     "requests>=2.31.0",
