@@ -698,18 +698,31 @@ def init(project: str) -> None:
             console.print("  [red]✗[/red]  Falha ao instalar Claude Code.")
             sys.exit(1)
     else:
-        # Verifica se o binário nativo está OK — se não, reinstala com --include=optional
+        # Verifica se o binário nativo está OK — se não, instala o pacote nativo diretamente
         r = subprocess.run(f'"{claude_bin}" --version', shell=True,
                            capture_output=True, text=True, timeout=10)
         output = (r.stdout + r.stderr).lower()
         if "native binary not installed" in output or "native package" in output:
-            console.print("  [yellow]⚠[/yellow]  Binário nativo ausente. Reinstalando...")
-            subprocess.run(
-                [npm_bin, "install", "-g", "@anthropic-ai/claude-code",
-                 "--prefix", str(npm_global), "--include=optional"],
-                check=False,
+            console.print("  [yellow]⚠[/yellow]  Binário nativo ausente. Instalando...")
+            _sys = sys.platform  # darwin, linux
+            _arch = subprocess.run(["uname", "-m"], capture_output=True, text=True).stdout.strip()
+            # arm64 → darwin-arm64, x86_64 → darwin-x64
+            arch_slug = "arm64" if "arm64" in _arch else "x64"
+            native_pkg = f"@anthropic-ai/claude-code-{_sys}-{arch_slug}"
+            result = subprocess.run(
+                [npm_bin, "install", native_pkg, "--prefix", str(npm_global)],
+                capture_output=True, text=True,
             )
-            console.print("  [green]✓[/green] Claude Code reparado")
+            if result.returncode == 0:
+                console.print("  [green]✓[/green] Claude Code reparado")
+            else:
+                # fallback: reinstala tudo com --include=optional
+                subprocess.run(
+                    [npm_bin, "install", "-g", "@anthropic-ai/claude-code",
+                     "--prefix", str(npm_global), "--include=optional"],
+                    check=False,
+                )
+                console.print("  [green]✓[/green] Claude Code reparado")
         else:
             version = r.stdout.strip().splitlines()[0] if r.stdout else "instalado"
             console.print(f"  [green]✓[/green] Claude Code [dim]{version}[/dim]")
