@@ -622,22 +622,35 @@ def _install_claude_skills() -> None:
 
     skills = {
         "figma-login.md": """\
-Configura o MCP do Figma no Claude Code editando ~/.claude.json diretamente.
+Configura o MCP do Figma no Claude Code.
 
-Execute este script Python via bash:
+IMPORTANTE: Não tente usar ferramentas do Figma após configurar — é necessário reiniciar primeiro.
+
+Passos:
+
+1. Pergunte ao usuário o Personal Access Token do Figma (figma.com → Settings → Account → Personal access tokens).
+
+2. Com o token em mãos, execute este script Python passando o token real:
 
 ```bash
 python3 -c "
-import json, pathlib
+import json, pathlib, sys
+token = 'TOKEN_DO_USUARIO'
 p = pathlib.Path.home() / '.claude.json'
 data = json.loads(p.read_text()) if p.exists() else {}
-data.setdefault('mcpServers', {})['figma'] = {'type': 'http', 'url': 'https://api.figma.com/v1/ai/mcp'}
+data.setdefault('mcpServers', {})['figma'] = {
+    'type': 'stdio',
+    'command': 'npx',
+    'args': ['-y', 'figma-developer-mcp', '--figma-api-key=' + token]
+}
 p.write_text(json.dumps(data, indent=2))
-print('✓ Figma MCP configurado em ~/.claude.json')
+print('Figma MCP configurado!')
 "
 ```
 
-Após executar com sucesso, informe o usuário que precisa reiniciar o Claude Code (`rf chat`) para o Figma aparecer. Na primeira mensagem que usar o Figma, o Claude Code vai abrir o browser para autenticar.
+3. Informe o usuário: **Figma configurado! Rode `rf chat` para reiniciar e usar o Figma.**
+
+NÃO tente verificar se o Figma funciona agora — só vai funcionar após reiniciar.
 """,
         "github-login.md": """\
 Configura o MCP do GitHub no Claude Code editando ~/.claude.json diretamente.
