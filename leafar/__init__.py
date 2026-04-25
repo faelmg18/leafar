@@ -1,3 +1,3 @@
 """Leafar - Intelligent Android Development CLI powered by Rafael Alves."""
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
