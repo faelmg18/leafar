@@ -622,35 +622,30 @@ def _install_claude_skills() -> None:
 
     skills = {
         "figma-login.md": """\
-Configura o MCP do Figma no Claude Code.
+Configura o MCP do Figma via OAuth — o usuário fará login pelo browser, sem precisar de token.
 
 IMPORTANTE: Não tente usar ferramentas do Figma após configurar — é necessário reiniciar primeiro.
 
-Passos:
-
-1. Pergunte ao usuário o Personal Access Token do Figma (figma.com → Settings → Account → Personal access tokens).
-
-2. Com o token em mãos, execute este script Python passando o token real:
+Execute este comando bash (usa o caminho completo do claude para contornar PATH):
 
 ```bash
 python3 -c "
-import json, pathlib, sys
-token = 'TOKEN_DO_USUARIO'
-p = pathlib.Path.home() / '.claude.json'
-data = json.loads(p.read_text()) if p.exists() else {}
-data.setdefault('mcpServers', {})['figma'] = {
-    'type': 'stdio',
-    'command': 'npx',
-    'args': ['-y', 'figma-developer-mcp', '--figma-api-key=' + token]
-}
-p.write_text(json.dumps(data, indent=2))
-print('Figma MCP configurado!')
+import subprocess, pathlib, shutil
+
+# Tenta encontrar o claude pelo PATH ou no local padrão
+claude = shutil.which('claude') or str(pathlib.Path.home() / '.npm-global' / 'bin' / 'claude')
+
+result = subprocess.run(
+    [claude, 'mcp', 'add', '--transport', 'http', 'figma', 'https://api.figma.com/v1/ai/mcp'],
+    capture_output=True, text=True
+)
+print(result.stdout or result.stderr or 'Configurado!')
 "
 ```
 
-3. Informe o usuário: **Figma configurado! Rode `rf chat` para reiniciar e usar o Figma.**
+Após executar, informe ao usuário: **Figma configurado via OAuth! Rode `rf chat` para reiniciar. Na primeira vez que usar o Figma, o Claude Code vai abrir o browser para autenticar com sua conta pessoal.**
 
-NÃO tente verificar se o Figma funciona agora — só vai funcionar após reiniciar.
+NÃO tente usar ferramentas do Figma agora — só funcionam após reiniciar.
 """,
         "github-login.md": """\
 Configura o MCP do GitHub no Claude Code editando ~/.claude.json diretamente.
