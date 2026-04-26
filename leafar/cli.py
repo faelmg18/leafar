@@ -627,55 +627,44 @@ def _install_claude_skills() -> None:
 
     skills = {
         "figma-login.md": """\
-Configura o MCP do Figma. Antes de qualquer coisa, verifique se já está configurado:
+Configura o MCP do Figma via OAuth — abre o browser para login com a conta pessoal do usuário.
 
+Execute os passos abaixo em ordem:
+
+**Passo 1 — Fazer login OAuth no Figma (abre o browser):**
+```bash
+rf figma-login
+```
+Aguarde o usuário completar o login no browser. Quando retornar "✓ Login realizado com sucesso!", prossiga.
+
+**Passo 2 — Configurar Claude Code com o token OAuth obtido:**
 ```bash
 python3 -c "
-import json, pathlib
-p = pathlib.Path.home() / '.claude.json'
-data = json.loads(p.read_text()) if p.exists() else {}
-if 'figma' in data.get('mcpServers', {}):
-    print('JA_CONFIGURADO')
+import json, pathlib, time
+token_file = pathlib.Path.home() / '.leafar' / 'figma_oauth.json'
+if not token_file.exists():
+    print('ERRO: login nao completado')
 else:
-    print('NAO_CONFIGURADO')
+    tokens = json.loads(token_file.read_text())
+    access_token = tokens.get('access_token', '')
+    if not access_token:
+        print('ERRO: token nao encontrado')
+    else:
+        p = pathlib.Path.home() / '.claude.json'
+        data = json.loads(p.read_text()) if p.exists() else {}
+        data.setdefault('mcpServers', {})['figma'] = {
+            'type': 'http',
+            'url': 'https://mcp.figma.com/mcp',
+            'headers': {'Authorization': 'Bearer ' + access_token}
+        }
+        p.write_text(json.dumps(data, indent=2))
+        print('Figma MCP configurado com OAuth!')
 "
 ```
 
-Se retornar JA_CONFIGURADO: informe o usuário que o Figma já está em ~/.claude.json. O MCP usa o Figma Desktop app para autenticar — peça ao usuário para verificar se o Figma Desktop está aberto e logado com a conta pessoal. Não rode este skill novamente.
+**Passo 3:** Informe ao usuário que o Figma está configurado e peça para reiniciar com `rf chat`.
 
-Se retornar NAO_CONFIGURADO: explique ao usuário as duas opções:
-
-**Opção 1 — Figma Desktop (recomendado, sem token):**
-O Figma Desktop expõe um servidor MCP local na porta 3845 usando a conta já logada no app.
-Passos:
-1. Abra o Figma Desktop e logue com sua conta pessoal
-2. Execute:
-```bash
-python3 -c "
-import json, pathlib
-p = pathlib.Path.home() / '.claude.json'
-data = json.loads(p.read_text()) if p.exists() else {}
-data.setdefault('mcpServers', {})['figma'] = {'type': 'http', 'url': 'http://127.0.0.1:3845'}
-p.write_text(json.dumps(data, indent=2))
-print('Figma Desktop MCP configurado!')
-"
-```
-3. Reinicie com `rf chat`
-
-**Opção 2 — Token pessoal:**
-Gere em figma.com → Settings → Account → Personal access tokens, depois informe o token.
-```bash
-python3 -c "
-import json, pathlib
-token = 'SEU_TOKEN'
-p = pathlib.Path.home() / '.claude.json'
-data = json.loads(p.read_text()) if p.exists() else {}
-data.setdefault('mcpServers', {})['figma'] = {'type': 'stdio', 'command': 'npx', 'args': ['-y', 'figma-developer-mcp', '--figma-api-key=' + token]}
-p.write_text(json.dumps(data, indent=2))
-print('Figma MCP configurado com token!')
-"
-```
-Reinicie com `rf chat`.
+IMPORTANTE: NÃO tente usar ferramentas do Figma agora — só funcionam após reiniciar.
 """,
         "github-login.md": """\
 Configura o MCP do GitHub no Claude Code editando ~/.claude.json diretamente.
