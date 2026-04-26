@@ -203,6 +203,64 @@ def gradle_run_tests(project_path: str = ".") -> str:
 
 
 # ---------------------------------------------------------------------------
+# Figma tools (via OAuth token armazenado por rf figma-login)
+# ---------------------------------------------------------------------------
+
+def _figma_client():
+    """Retorna FigmaMCPClient autenticado, ou None se não logado."""
+    try:
+        from .figma_auth import get_mcp_client
+        return get_mcp_client()
+    except Exception:
+        return None
+
+
+@mcp.tool()
+def figma_get_file(file_key: str) -> str:
+    """Get a Figma file by its key (the ID in the Figma URL)."""
+    client = _figma_client()
+    if not client:
+        return "Figma não autenticado. Rode 'rf figma-login' no terminal."
+    result = client.call_tool("get_file", {"file_key": file_key})
+    return result.get("output", result.get("error", str(result)))
+
+
+@mcp.tool()
+def figma_get_node(file_key: str, node_id: str) -> str:
+    """Get a specific node from a Figma file."""
+    client = _figma_client()
+    if not client:
+        return "Figma não autenticado. Rode 'rf figma-login' no terminal."
+    result = client.call_tool("get_node", {"file_key": file_key, "node_id": node_id})
+    return result.get("output", result.get("error", str(result)))
+
+
+@mcp.tool()
+def figma_get_images(file_key: str, node_ids: str, scale: float = 1.0, format: str = "png") -> str:
+    """Export images from a Figma file. node_ids is comma-separated."""
+    client = _figma_client()
+    if not client:
+        return "Figma não autenticado. Rode 'rf figma-login' no terminal."
+    result = client.call_tool("get_images", {
+        "file_key": file_key,
+        "node_ids": node_ids,
+        "scale": scale,
+        "format": format,
+    })
+    return result.get("output", result.get("error", str(result)))
+
+
+@mcp.tool()
+def figma_get_comments(file_key: str) -> str:
+    """Get comments from a Figma file."""
+    client = _figma_client()
+    if not client:
+        return "Figma não autenticado. Rode 'rf figma-login' no terminal."
+    result = client.call_tool("get_comments", {"file_key": file_key})
+    return result.get("output", result.get("error", str(result)))
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
